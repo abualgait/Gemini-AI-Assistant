@@ -94,7 +94,6 @@ class MainActivity : ComponentActivity() {
             GeminiAITheme {
                 val chat = viewModel.chat.value
                 val loading = viewModel.isLoading.value
-                val error = viewModel.error.value
                 val unSentImages = viewModel.images
                 var textState by remember { mutableStateOf(TextFieldValue("")) }
 
@@ -159,10 +158,18 @@ class MainActivity : ComponentActivity() {
                             state = lazyColumnListState
                         ) {
                             itemsIndexed(chat) { _, message ->
-                                if (message.id == 0) {
-                                    MessageUser(message)
-                                } else {
-                                    MessageGemini(message)
+                                when (message.id) {
+                                    0 -> {
+                                        MessageUser(message)
+                                    }
+
+                                    1 -> {
+                                        MessageGemini(message)
+                                    }
+
+                                    else -> {
+                                        MessageError(message)
+                                    }
                                 }
                             }
                         }
@@ -248,15 +255,17 @@ class MainActivity : ComponentActivity() {
                                 if (loading) {
                                     CircularProgressIndicator()
                                 } else {
-                                    Button(enabled = textState.text.isNotEmpty() && unSentImages.isNotEmpty(), onClick = {
-                                        val images = unSentImages.map {
-                                            it
-                                        }
-                                        viewModel.sendPrompt(textState.text, images)
-                                        textState = TextFieldValue("")
-                                        viewModel.reset()
+                                    Button(
+                                        enabled = textState.text.isNotEmpty() && unSentImages.isNotEmpty(),
+                                        onClick = {
+                                            val images = unSentImages.map {
+                                                it
+                                            }
+                                            viewModel.sendPrompt(textState.text, images)
+                                            textState = TextFieldValue("")
+                                            viewModel.reset()
 
-                                    }) {
+                                        }) {
                                         Icon(
                                             imageVector = Icons.Default.Send,
                                             contentDescription = null
@@ -268,7 +277,9 @@ class MainActivity : ComponentActivity() {
                                 text = "Enter a prompt and select images",
                                 fontSize = 12.sp,
                                 textAlign = TextAlign.Center,
-                                modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp)
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 20.dp)
                             )
 
                         }
@@ -289,11 +300,11 @@ class MainActivity : ComponentActivity() {
         ) {
             Row(
                 horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.Top
             ) {
                 Column(
                     horizontalAlignment = Alignment.End,
-                    verticalArrangement = Arrangement.Center, modifier = Modifier.weight(1f)
+                    verticalArrangement = Arrangement.Top, modifier = Modifier.weight(1f)
                 ) {
                     Text(
                         text = message.text,
@@ -301,8 +312,8 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier
                             .clip(
                                 RoundedCornerShape(
-                                    topEnd = 25.dp,
-                                    bottomEnd = 0.dp,
+                                    topEnd = 0.dp,
+                                    bottomEnd = 25.dp,
                                     bottomStart = 25.dp,
                                     topStart = 25.dp
                                 )
@@ -352,50 +363,108 @@ class MainActivity : ComponentActivity() {
         ) {
             Row(
                 horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.Top
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
 
-                    Image(
-                        painter = painterResource(id = R.drawable.geminiai),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .size(35.dp)
-                            .clip(CircleShape)
-                            .border(
-                                width = 1.dp,
-                                color = Blue400,
-                                shape = CircleShape
+
+                Image(
+                    painter = painterResource(id = R.drawable.geminiai),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(35.dp)
+                        .clip(CircleShape)
+                        .border(
+                            width = 1.dp,
+                            color = Blue400,
+                            shape = CircleShape
+                        )
+                )
+                Spacer(modifier = Modifier.size(10.dp))
+                Text(
+                    text = message.text,
+                    color = Color.White,
+                    modifier = Modifier
+                        .clip(
+                            RoundedCornerShape(
+                                topEnd = 25.dp,
+                                bottomEnd = 25.dp,
+                                bottomStart = 25.dp,
+                                topStart = 0.dp
                             )
-                    )
-                    Spacer(modifier = Modifier.size(10.dp))
-                    Text(
-                        text = message.text,
-                        color = Color.White,
-                        modifier = Modifier
-                            .clip(
-                                RoundedCornerShape(
-                                    topEnd = 25.dp,
-                                    bottomEnd = 25.dp,
-                                    bottomStart = 0.dp,
-                                    topStart = 25.dp
-                                )
+                        )
+                        .wrapContentWidth()
+                        .wrapContentHeight()
+                        .background(Blue400)
+                        .padding(horizontal = 20.dp, vertical = 10.dp)
+
+                )
+
+            }
+        }
+
+    }
+
+
+    @Composable
+    fun MessageError(message: GeminiViewModel.Message) {
+        Box(
+            contentAlignment = Alignment.CenterStart,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(10.dp)
+        ) {
+
+            Row(
+                verticalAlignment = Alignment.Top,
+                horizontalArrangement = Arrangement.Start
+            ) {
+
+                Image(
+                    painter = painterResource(id = R.drawable.geminiai),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(35.dp)
+                        .clip(CircleShape)
+                        .border(
+                            width = 1.dp,
+                            color = Blue400,
+                            shape = CircleShape
+                        )
+                )
+                Spacer(modifier = Modifier.size(10.dp))
+                Text(
+                    text = message.text,
+                    color = Color.Red,
+                    modifier = Modifier
+                        .clip(
+                            RoundedCornerShape(
+                                topEnd = 25.dp,
+                                bottomEnd = 25.dp,
+                                bottomStart = 25.dp,
+                                topStart = 0.dp
                             )
-                            .wrapContentWidth()
-                            .wrapContentHeight()
-                            .background(Blue400)
-                            .padding(horizontal = 20.dp, vertical = 10.dp)
+                        )
+                        .border(
+                            width = 1.dp,
+                            color = Color.Red,
+                            shape =  RoundedCornerShape(
+                                topEnd = 25.dp,
+                                bottomEnd = 25.dp,
+                                bottomStart = 0.dp,
+                                topStart = 25.dp
+                            )
+                        )
+                        .wrapContentWidth()
+                        .wrapContentHeight()
+                        .background(Color.Red.copy(alpha = 0.25f))
+                        .padding(horizontal = 20.dp, vertical = 10.dp)
 
-                    )
-
-
-                }
+                )
 
 
             }
+
+
         }
 
     }

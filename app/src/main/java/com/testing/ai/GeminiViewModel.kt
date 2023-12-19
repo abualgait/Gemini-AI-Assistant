@@ -23,7 +23,6 @@ class GeminiViewModel : ViewModel() {
     }
 
     val isLoading: MutableState<Boolean> = mutableStateOf(false)
-    val error: MutableState<String?> = mutableStateOf(null)
     val chat: MutableState<List<Message>> = mutableStateOf(listOf())
 
     val images: SnapshotStateList<Bitmap> = mutableStateListOf()
@@ -32,8 +31,9 @@ class GeminiViewModel : ViewModel() {
         images.add(bitmap)
     }
 
-    val chunks = mutableListOf("")
+
     fun sendPrompt(prompt: String, images: List<Bitmap>) {
+        val chunks = mutableListOf("")
         viewModelScope.launch(Dispatchers.IO) {
             isLoading.value = true
             chat.value += Message(
@@ -50,12 +50,15 @@ class GeminiViewModel : ViewModel() {
 
             generativeModel.generateContentStream(inputContent)
                 .catch {
-                    error.value = it.localizedMessage
+                    chat.value += Message(
+                        id = 2,
+                        text = it.localizedMessage ?: "Unknown Error",
+                    )
                 }
                 .collect { chunk ->
                     chunks += chunk.text.toString()
-                    if (chat.value.last().id == 1) {
-                        val last = chat.value.last()
+                    val last = chat.value.last()
+                    if (last.id == 1) {
                         chat.value = chat.value.filter { message ->
                             message != last
                         }
@@ -72,7 +75,6 @@ class GeminiViewModel : ViewModel() {
 
     fun reset() {
         viewModelScope.launch {
-            error.value = null
             images.clear()
         }
     }
